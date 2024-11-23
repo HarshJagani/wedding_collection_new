@@ -1,5 +1,8 @@
+// ignore_for_file: library_private_types_in_public_api
+
 import 'package:flutter/material.dart';
 import 'package:wedding_collection_new/db_helper.dart';
+import 'package:wedding_collection_new/utils/models/product_model.dart';
 
 class AddProductScreen extends StatefulWidget {
   const AddProductScreen({super.key});
@@ -13,30 +16,45 @@ class _AddProductScreenState extends State<AddProductScreen> {
   final _nameController = TextEditingController();
   final _imagesController = TextEditingController();
 
-
-
   // Add new product to Firebase
   void _addProduct() async {
     String name = _nameController.text.trim();
     List<String> images = _imagesController.text.trim().split(',');
 
-    if (name.isEmpty || images.isEmpty) {
+    if (name.isEmpty ||
+        images.isEmpty ||
+        images.any((image) => image.trim().isEmpty)) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Please enter valid product information')),
       );
       return;
     }
 
-    await firebaseService.addProduct(name, images);
-    Navigator.pop(context);
-    // Show success message
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Product added successfully!')),
+    // Create a Product instance
+    Product newProduct = Product(
+      name: name,
+      images: images.map((image) => image.trim()).toList(),
+      bookedDates: [], id: '', // No bookings initially
     );
 
-    // Clear fields after adding
-    _nameController.clear();
-    _imagesController.clear();
+    // Add product using FirebaseService
+    try {
+      await firebaseService.addProduct(newProduct);
+
+      // Navigate back and show success message
+      Navigator.pop(context);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Product added successfully!')),
+      );
+
+      // Clear input fields
+      _nameController.clear();
+      _imagesController.clear();
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error adding product: $e')),
+      );
+    }
   }
 
   @override

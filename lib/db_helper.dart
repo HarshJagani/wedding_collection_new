@@ -1,117 +1,103 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:wedding_collection_new/utils/models/product_model.dart';
 
 class FirebaseService {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
 
   // Add new product to Firestore (without booking dates)
-  Future<void> addProduct(String name, List<String> images) async {
+  Future<void> addProduct(Product product) async {
     try {
-      // Create product data map without booked_dates
-      Map<String, dynamic> productData = {
-        'name': name,
-        'images': images,
-        'booked_dates': [], // Start with an empty list for booked_dates
-      };
-
-      // Add product data to Firestore under the 'products' collection
-      await _db.collection('products').add(productData);
+      await _db.collection('products').add(product.toMap());
       print("Product added successfully!");
     } catch (e) {
       print('Error adding product: $e');
     }
   }
 
-
-// Cancel a specific booking for a product
-Future<void> cancelBooking(String productId, DateTime startDate) async {
-  try {
-    // Fetch the product document from Firestore
-    DocumentSnapshot productSnapshot =
-        await _db.collection('products').doc(productId).get();
-
-    if (productSnapshot.exists) {
-      var productData = productSnapshot.data() as Map<String, dynamic>;
-
-      // Fetch the list of booked dates
-      List<dynamic> bookedDates = List.from(productData['booked_dates'] ?? []);
-      
-      // Find the booking entry that matches the start date
-      var bookingToCancel = bookedDates.firstWhere(
-        (booking) {
-          Timestamp bookedStartTimestamp = booking['start_date'] as Timestamp;
-          DateTime bookedStartDate = bookedStartTimestamp.toDate();
-          return bookedStartDate.isAtSameMomentAs(startDate);
-        },
-        orElse: () => null,
-      );
-
-      // If the booking is found, remove it from the list
-      if (bookingToCancel != null) {
-        bookedDates.remove(bookingToCancel);
-
-        // Update Firestore with the new list of booked dates
-        await _db.collection('products').doc(productId).update({
-          'booked_dates': bookedDates,
-        });
-
-        print("Booking cancelled successfully!");
-      } else {
-        print("Booking not found for the selected date.");
-      }
-    } else {
-      print("Product not found.");
-    }
-  } catch (e) {
-    print('Error canceling booking: $e');
-  }
-}
-
-
-  Future<void> addBookingDates(
-    String productId,
-    DateTime startDate,
-    DateTime endDate,
-    double totalRent, // New parameter for total rent
-    double advance, // New parameter for advance
-  ) async {
+  // Cancel a specific booking for a product
+  Future<void> cancelBooking(String productId, DateTime startDate) async {
     try {
-      // Fetch the product document from Firestore
       DocumentSnapshot productSnapshot =
           await _db.collection('products').doc(productId).get();
+
       if (productSnapshot.exists) {
         var productData = productSnapshot.data() as Map<String, dynamic>;
         List<dynamic> bookedDates =
             List.from(productData['booked_dates'] ?? []);
 
+        var bookingToCancel = bookedDates.firstWhere(
+          (booking) {
+            Timestamp bookedStartTimestamp = booking['start_date'] as Timestamp;
+            return bookedStartTimestamp.toDate().isAtSameMomentAs(startDate);
+          },
+          orElse: () => null,
+        );
+
+        if (bookingToCancel != null) {
+          bookedDates.remove(bookingToCancel);
+
+          await _db.collection('products').doc(productId).update({
+            'booked_dates': bookedDates,
+          });
+
+          print("Booking cancelled successfully!");
+        } else {
+          print("Booking not found for the selected date.");
+        }
+      } else {
+        print("Product not found.");
+      }
+    } catch (e) {
+      print('Error canceling booking: $e');
+    }
+  }
+
+  // Function to delete a product by its productId
+  Future<void> deleteProduct(String productId) async {
+    try {
+      // Deleting the product document from Firestore
+      await _db.collection('products').doc(productId).delete();
+
+      print("Product deleted successfully!");
+    } catch (e) {
+      print('Error deleting product: $e');
+    }
+  }
+
+  // Add booking dates for a product
+  Future<void> addBookingDates(
+    String productId,
+    Booking
+        booking, // Accepting the Booking object instead of individual fields
+  ) async {
+    try {
+      // Fetch the product document from Firestore
+      DocumentSnapshot productSnapshot =
+          await _db.collection('products').doc(productId).get();
+
+      if (productSnapshot.exists) {
+        // Convert the document data to a Product model
+        Product product = Product.fromFirestore(productSnapshot);
+
         // Check if the new date range overlaps with any existing booked range
-        for (var booked in bookedDates) {
-          Timestamp bookedStartTimestamp = booked['start_date'] as Timestamp;
-          Timestamp bookedEndTimestamp = booked['end_date'] as Timestamp;
-
-          DateTime bookedStartDate = bookedStartTimestamp.toDate();
-          DateTime bookedEndDate = bookedEndTimestamp.toDate();
-
-          if ((startDate.isBefore(bookedEndDate) &&
-              endDate.isAfter(bookedStartDate))) {
+        for (var booked in product.bookedDates) {
+          if (!(booking.endDate.isBefore(booked.startDate) ||
+              booking.startDate.isAfter(booked.endDate))) {
             print("This date range is already booked!");
-            return; // Do not proceed if there is an overlap
+            return; // If there's an overlap, do not proceed
           }
         }
 
-        // Add the new booking data
-        bookedDates.add({
-          'start_date': Timestamp.fromDate(startDate),
-          'end_date': Timestamp.fromDate(endDate),
-          'total_rent': totalRent,
-          'advance': advance,
-        });
+        // Add the new booking to the bookedDates list
+        List<Booking> updatedBookedDates = List.from(product.bookedDates)
+          ..add(booking);
 
-        // Update Firestore with the new booking ranges
+        // Update Firestore with the new booked dates
         await _db.collection('products').doc(productId).update({
-          'booked_dates': bookedDates,
+          'booked_dates': updatedBookedDates.map((b) => b.toMap()).toList(),
         });
 
-        print("Booking dates added successfully with rent and advance!");
+        print("Booking dates added successfully with customer details!");
       } else {
         print("Product not found.");
       }
@@ -121,109 +107,57 @@ Future<void> cancelBooking(String productId, DateTime startDate) async {
   }
 
   // Fetch all products from Firestore
-  Future<List<Map<String, dynamic>>> fetchAllProducts() async {
+  Future<List<Product>> fetchAllProducts() async {
     try {
       QuerySnapshot snapshot = await _db.collection('products').get();
-
-      List<Map<String, dynamic>> productsList = [];
-
-      for (var doc in snapshot.docs) {
-        // Convert each document to a map
-        Map<String, dynamic> productData = doc.data() as Map<String, dynamic>;
-
-        // Add the product ID to the data (Firestore document ID)
-        productData['product_id'] = doc.id;
-
-        // Add the product data to the list
-        productsList.add(productData);
-      }
-
-      return productsList;
+      return snapshot.docs.map((doc) => Product.fromFirestore(doc)).toList();
     } catch (e) {
       print("Error fetching products: $e");
       return [];
     }
   }
 
-  // Fetch product data by product ID, including booked dates as date ranges
-  Future<Map<String, dynamic>> fetchProduct(String productId) async {
+  // Fetch a single product by ID, including booked dates
+  Future<Product> fetchProduct(String productId) async {
     try {
       // Fetch product document from Firestore
       DocumentSnapshot productSnapshot =
           await _db.collection('products').doc(productId).get();
+
       if (productSnapshot.exists) {
-        var productData = productSnapshot.data() as Map<String, dynamic>;
+        // Use the Product factory to create a Product object from Firestore data
+        Product product = Product.fromFirestore(productSnapshot);
 
-        // Safely convert booked_dates to a list of date ranges
-        List<Map<String, String>> bookedDates = [];
-        if (productData['booked_dates'] != null) {
-          bookedDates = (productData['booked_dates'] as List<dynamic>).map((e) {
-            Timestamp startTimestamp = e['start_date'];
-            Timestamp endTimestamp = e['end_date'];
-
-            return {
-              'start_date': startTimestamp.toDate().toIso8601String(),
-              'end_date': endTimestamp.toDate().toIso8601String(),
-            };
-          }).toList();
-        }
-
-        // Return the product data as a Map
-        return {
-          'name': productData['name'],
-          'images': List<String>.from(productData['images']),
-          'booked_dates': bookedDates,
-        };
+        return product; // Return the Product object
       } else {
         print("Product not found.");
-        return Future.error('Product not found');
+        throw Exception("Product not found");
       }
     } catch (e) {
       print('Error fetching product: $e');
-      return Future.error(e);
+      throw e;
     }
   }
 
-  // Check if a specific date range is available for booking
   Future<bool> checkAvailability(
       String productId, DateTime startDate, DateTime endDate) async {
     try {
-      // Fetch the product data by ID
-      final product = await fetchProduct(productId);
-      List<Map<String, String>> bookedDates = product['booked_dates'];
+      // Fetch the product using the updated fetchProduct function
+      Product product = await fetchProduct(productId);
 
-      // Check if the new date range conflicts with any existing booked range
-      for (var booked in bookedDates) {
-        DateTime bookedStartDate = DateTime.parse(booked['start_date']!);
-        DateTime bookedEndDate = DateTime.parse(booked['end_date']!);
-
-        // Conflict occurs if:
-        // New start date is before or at an existing end date AND
-        // New end date is after or at an existing start date
-        if (!(endDate.isBefore(bookedStartDate) ||
-            startDate.isAfter(bookedEndDate))) {
-          return false; // Conflict found
+      // Loop through the booked dates for the product
+      for (var booking in product.bookedDates) {
+        // Compare the requested date range with existing bookings
+        if (!(endDate.isBefore(booking.startDate) ||
+            startDate.isAfter(booking.endDate))) {
+          return false; // The date range is not available
         }
       }
 
-      return true; // No conflicts
+      return true; // The date range is available
     } catch (e) {
       print('Error checking availability: $e');
       return false;
     }
-  }
-
-  // Helper method to get all dates in a given range (inclusive)
-  List<DateTime> _getDatesInRange(DateTime startDate, DateTime endDate) {
-    List<DateTime> datesInRange = [];
-    DateTime currentDate = startDate;
-
-    while (currentDate.isBefore(endDate) ||
-        currentDate.isAtSameMomentAs(endDate)) {
-      datesInRange.add(currentDate);
-      currentDate = currentDate.add(const Duration(days: 1));
-    }
-
-    return datesInRange;
   }
 }

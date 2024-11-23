@@ -44,6 +44,8 @@ dependencies:
 
   firebase_core: any
   cached_network_image: ^3.4.1
+  url_launcher: ^6.3.1
+  shimmer: ^3.0.0
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -83,10 +85,23 @@ flutter:
   # list giving the asset and other descriptors for the font. For
   # example:
   # fonts:
-  #   - family: Schyler
-  #     fonts:
-  #       - asset: fonts/Schyler-Regular.ttf
-  #       - asset: fonts/Schyler-Italic.ttf
+  fonts:
+     - family: Poppins
+       fonts:
+         - asset: assets/fonts/Poppins/Poppins-Black.ttf
+         - asset: assets/fonts/Poppins/Poppins-Italic.ttf
+           style: italic
+         - asset: assets/fonts/Poppins/Poppins-Bold.ttf
+           weight: 800
+         - asset: assets/fonts/Poppins/Poppins-Light.ttf
+           weight: 300
+         - asset: assets/fonts/Poppins/Poppins-Medium.ttf
+           weight: 500
+         - asset: assets/fonts/Poppins/Poppins-Regular.ttf
+           weight: 400
+  assets:
+    - shorebird.yaml
+    - assets/images/sad-face.png
   #         style: italic
   #   - family: Trajan Pro
   #     fonts:
