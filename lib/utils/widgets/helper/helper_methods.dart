@@ -60,7 +60,7 @@ class Helprtmethods {
       // Return the direct link
       return 'https://drive.google.com/uc?export=view&id=$fileId';
     } else {
-      throw FormatException('Invalid Google Drive link');
+      return '';
     }
   }
 }

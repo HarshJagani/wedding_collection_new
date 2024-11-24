@@ -1,14 +1,14 @@
 // ignore_for_file: library_private_types_in_public_api
-
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:wedding_collection_new/db_helper.dart'; // FirebaseService file
-import 'package:wedding_collection_new/product_detail.dart'; // Product details screen
-import 'package:wedding_collection_new/upload_product.dart'; // Add Product screen
+import 'package:wedding_collection_new/ui/product_detail.dart'; // Product details screen
+import 'package:wedding_collection_new/ui/upload_product.dart'; // Add Product screen
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:wedding_collection_new/utils/helper_methods.dart';
+import 'package:wedding_collection_new/utils/widgets/helper/helper_methods.dart';
 import 'package:wedding_collection_new/utils/models/product_model.dart';
+import 'package:wedding_collection_new/utils/widgets/no_internet_widget.dart';
 import 'package:wedding_collection_new/utils/widgets/shimmer_widget.dart';
 
 class HomePage extends StatefulWidget {
@@ -25,7 +25,6 @@ class _HomePageState extends State<HomePage> {
   List<Product> _products = [];
   List<Product> _filteredProducts = [];
   bool _isLoading = true; // Variable to track loading state
-
   final TextEditingController _searchController =
       TextEditingController(); // Controller for search
 
@@ -110,7 +109,8 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return ConnectivityWrapper(
+        child: Scaffold(
       appBar: AppBar(
         title: const Text('Product List'),
       ),
@@ -138,7 +138,7 @@ class _HomePageState extends State<HomePage> {
                             'No Data Found')) // Show "No Data Found" text if the list is empty
                     : RefreshIndicator(
                         color: Color(0xFF4B68FF),
-                        backgroundColor:  Colors.white,
+                        backgroundColor: Colors.white,
                         onRefresh: () async {
                           _loadProducts();
                         },
@@ -167,15 +167,15 @@ class _HomePageState extends State<HomePage> {
                                     ),
                                   );
                                 },
-                                // onLongPress: () {
-                                //   Helprtmethods().showaAlertDialog(context,
-                                //       onPressed: () {
-                                //     _deleteProduct(product.id);
-                                //   },
-                                //       tital: 'Delete',
-                                //       subtital:
-                                //           'Are you sure you want to delete this product?');
-                                // },
+                                onLongPress: () {
+                                  Helprtmethods().showaAlertDialog(context,
+                                      onPressed: () {
+                                    _deleteProduct(product.id);
+                                  },
+                                      tital: 'Delete',
+                                      subtital:
+                                          'Are you sure you want to delete this product?');
+                                },
                                 child: Card(
                                   child: Column(
                                     mainAxisAlignment: MainAxisAlignment.start,
@@ -187,7 +187,9 @@ class _HomePageState extends State<HomePage> {
                                         child: CachedNetworkImage(
                                           height: 200,
                                           width: double.maxFinite,
-                                          imageUrl: Helprtmethods().convertGoogleDriveLink(product.images.first),
+                                          imageUrl: Helprtmethods()
+                                              .convertGoogleDriveLink(
+                                                  product.images.first),
                                           placeholder: (context, url) =>
                                               Shimmer.fromColors(
                                             child: Card(),
@@ -239,6 +241,6 @@ class _HomePageState extends State<HomePage> {
         tooltip: 'Add Product',
         child: const Icon(Icons.add),
       ),
-    );
+    ));
   }
 }

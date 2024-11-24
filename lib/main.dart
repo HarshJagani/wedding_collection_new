@@ -1,13 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:wedding_collection_new/home.dart';
-import 'package:wedding_collection_new/product_detail.dart';
-import 'package:wedding_collection_new/upload_product.dart';
+import 'package:flutter_native_splash/flutter_native_splash.dart';
+import 'package:provider/provider.dart';
+import 'package:wedding_collection_new/ui/home.dart';
 import 'package:wedding_collection_new/utils/costom%20theme/theme.dart';
+import 'package:wedding_collection_new/utils/widgets/helper/internet_provider.dart';
+import 'package:wedding_collection_new/utils/widgets/no_internet_widget.dart';
 
 void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
+  final WidgetsBinding widgetsBinding =
+      WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(); // Initialize Firebase
+  FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
   runApp(const MyApp());
 }
 
@@ -16,18 +20,18 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Wedding Collection',
-      themeMode: ThemeMode.system,
-      theme: ECTheme.lightTheme,
-      darkTheme: ECTheme.darkTheme,
-      debugShowCheckedModeBanner: false,
-      initialRoute: '/',
-      routes: {
-        '/': (context) => const HomePage(),
-        '/addProduct': (context) => const AddProductScreen(),
-       
-      },
+    Future.delayed(Duration(seconds: 2),() => FlutterNativeSplash.remove());
+    return ChangeNotifierProvider(
+      create: (_) =>
+          ConnectivityService(), // Provide ConnectivityService globally
+      child: MaterialApp(
+        title: 'Wedding Collection',
+        themeMode: ThemeMode.system,
+        theme: ECTheme.lightTheme,
+        darkTheme: ECTheme.darkTheme,
+        debugShowCheckedModeBanner: false,
+        home: ConnectivityWrapper(child: const HomePage()),
+      ),
     );
   }
 }

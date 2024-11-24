@@ -3,6 +3,7 @@
 import 'package:flutter/material.dart';
 import 'package:wedding_collection_new/db_helper.dart';
 import 'package:wedding_collection_new/utils/models/product_model.dart';
+import 'package:wedding_collection_new/utils/widgets/no_internet_widget.dart';
 
 class AddProductScreen extends StatefulWidget {
   const AddProductScreen({super.key});
@@ -59,36 +60,38 @@ class _AddProductScreenState extends State<AddProductScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Add Product'),
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            TextField(
-              controller: _nameController,
-              decoration: const InputDecoration(
-                labelText: 'Product Name',
-                border: OutlineInputBorder(),
+    return ConnectivityWrapper(
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text('Add Product'),
+        ),
+        body: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              TextField(
+                controller: _nameController,
+                decoration: const InputDecoration(
+                  labelText: 'Product Name',
+                  border: OutlineInputBorder(),
+                ),
               ),
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: _imagesController,
-              decoration: const InputDecoration(
-                labelText: 'Images (comma-separated URLs)',
-                border: OutlineInputBorder(),
+              const SizedBox(height: 16),
+              TextField(
+                controller: _imagesController,
+                decoration: const InputDecoration(
+                  labelText: 'Images (comma-separated URLs)',
+                  border: OutlineInputBorder(),
+                ),
               ),
-            ),
-            const SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: _addProduct,
-              child: const Text('Add Product'),
-            ),
-          ],
+              const SizedBox(height: 16),
+              ElevatedButton(
+                onPressed: _addProduct,
+                child: const Text('Add Product'),
+              ),
+            ],
+          ),
         ),
       ),
     );

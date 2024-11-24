@@ -52,6 +52,53 @@ class FirebaseService {
     }
   }
 
+  Future<void> updateBooking(String productId, Booking updatedBooking) async {
+    try {
+      // Fetch the product document from Firestore
+      DocumentSnapshot productSnapshot =
+          await _db.collection('products').doc(productId).get();
+
+      if (productSnapshot.exists) {
+        var productData = productSnapshot.data() as Map<String, dynamic>;
+        List<dynamic> bookedDates =
+            List.from(productData['booked_dates'] ?? []);
+
+        // Find the existing booking to update by matching the start date
+        var bookingToUpdate = bookedDates.firstWhere(
+          (booking) {
+            Timestamp bookedStartTimestamp = booking['start_date'] as Timestamp;
+            return bookedStartTimestamp
+                .toDate()
+                .isAtSameMomentAs(updatedBooking.startDate);
+          },
+          orElse: () => null,
+        );
+
+        if (bookingToUpdate != null) {
+          // Update the booking details (e.g., startDate, endDate, customerName)
+          int index = bookedDates.indexOf(bookingToUpdate);
+
+          // Update the relevant fields
+          bookedDates[index] = updatedBooking
+              .toMap(); // Assuming your Booking class has a toMap() method
+
+          // Update the product with the new booking data
+          await _db.collection('products').doc(productId).update({
+            'booked_dates': bookedDates,
+          });
+
+          print("Booking updated successfully!");
+        } else {
+          print("Booking not found for the selected date.");
+        }
+      } else {
+        print("Product not found.");
+      }
+    } catch (e) {
+      print('Error updating booking: $e');
+    }
+  }
+
   // Function to delete a product by its productId
   Future<void> deleteProduct(String productId) async {
     try {
