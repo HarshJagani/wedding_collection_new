@@ -52,10 +52,12 @@ class _HomePageState extends State<HomePage> {
   }
 
   // Function to delete the product
-  void _deleteProduct(String productId) async {
+  void _deleteProduct(String productId,
+      {required List<ImageData> images}) async {
     try {
       _isLoading = true;
-      await firebaseService.deleteProduct(productId); // Delete from Firebase
+      await firebaseService.deleteProduct(
+          productId, images); // Delete from Firebase
       setState(() {
         _products.removeWhere(
             (product) => product.id == productId); // Remove from local list
@@ -168,12 +170,13 @@ class _HomePageState extends State<HomePage> {
                                   );
                                 },
                                 onLongPress: () {
-                                  Helprtmethods().showaAlertDialog(context,
+                                  HelperMethods().showaAlertDialog(context,
                                       onPressed: () {
-                                    _deleteProduct(product.id);
+                                    _deleteProduct(product.id,
+                                        images: product.images);
                                   },
-                                      tital: 'Delete',
-                                      subtital:
+                                      title: 'Delete',
+                                      subTitle:
                                           'Are you sure you want to delete this product?');
                                 },
                                 child: Card(
@@ -187,9 +190,8 @@ class _HomePageState extends State<HomePage> {
                                         child: CachedNetworkImage(
                                           height: 200,
                                           width: double.maxFinite,
-                                          imageUrl: Helprtmethods()
-                                              .convertGoogleDriveLink(
-                                                  product.images.first),
+                                          imageUrl:
+                                              product.images.first.imageUrl,
                                           placeholder: (context, url) =>
                                               Shimmer.fromColors(
                                             child: Card(),

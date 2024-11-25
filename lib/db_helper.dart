@@ -1,8 +1,12 @@
+import 'dart:io';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:wedding_collection_new/utils/models/product_model.dart';
 
 class FirebaseService {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
+  final FirebaseStorage _storage = FirebaseStorage.instance;
 
   // Add new product to Firestore (without booking dates)
   Future<void> addProduct(Product product) async {
@@ -12,6 +16,27 @@ class FirebaseService {
     } catch (e) {
       print('Error adding product: $e');
     }
+  }
+
+  Future<List<ImageData>> uploadImages(List<File> images) async {
+    List<ImageData> uploadedImages = [];
+    for (File image in images) {
+      try {
+        String fileName = DateTime.now().millisecondsSinceEpoch.toString();
+        Reference ref = _storage.ref().child('products/$fileName');
+        UploadTask uploadTask = ref.putFile(image);
+        TaskSnapshot snapshot = await uploadTask;
+
+        String downloadUrl = await snapshot.ref.getDownloadURL();
+        uploadedImages.add(
+          ImageData(imagePath: ref.fullPath, imageUrl: downloadUrl),
+        );
+      } catch (e) {
+        print('Error uploading image: $e');
+        rethrow;
+      }
+    }
+    return uploadedImages;
   }
 
   // Cancel a specific booking for a product
@@ -99,15 +124,20 @@ class FirebaseService {
     }
   }
 
-  // Function to delete a product by its productId
-  Future<void> deleteProduct(String productId) async {
+  Future<void> deleteProduct(String productId, List<ImageData> images) async {
     try {
-      // Deleting the product document from Firestore
+      // Delete images from Firebase Storage
+      for (var image in images) {
+        await _storage.ref(image.imagePath).delete();
+      }
+
+      // Delete the product document from Firestore
       await _db.collection('products').doc(productId).delete();
 
-      print("Product deleted successfully!");
+      print("Product and its images deleted successfully!");
     } catch (e) {
       print('Error deleting product: $e');
+      rethrow;
     }
   }
 

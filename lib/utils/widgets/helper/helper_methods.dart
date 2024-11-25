@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
 
-class Helprtmethods {
+class HelperMethods {
   showaAlertDialog(BuildContext context,
       {required void Function()? onPressed,
-      required String tital,
-      required String subtital}) {
+      required String title,
+      required String subTitle}) {
     showDialog(
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: Text(tital,
+          title: Text(title,
               style: Theme.of(context)
                   .textTheme
                   .bodyMedium!
@@ -17,7 +17,7 @@ class Helprtmethods {
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text(subtital, style: Theme.of(context).textTheme.bodyMedium),
+              Text(subTitle, style: Theme.of(context).textTheme.bodyMedium),
               const SizedBox(height: 20),
               Row(
                 children: [

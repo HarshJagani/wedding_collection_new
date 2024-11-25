@@ -154,9 +154,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                         scrollDirection: Axis.horizontal,
                         itemCount: _product.images.length,
                         itemBuilder: (context, index) {
-                          String imageUrl = Helprtmethods()
-                              .convertGoogleDriveLink(
-                                  _product.images[index]); // Actual image URL
+                          String imageUrl = _product.images[index].imageUrl; // Actual image URL
                           String defaultImageUrl =
                               'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ7xBNBjcKl82vxd9TSRFYTTUOJxRrJkwEN3Q&s'; // Default image URL
                           return CachedNetworkImage(
