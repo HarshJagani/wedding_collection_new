@@ -3,7 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 class Product {
   final String id; // Firestore document ID
   final String name;
-  final List<String> images;
+  List<String> images;
   final List<Booking> bookedDates;
 
   Product({

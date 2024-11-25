@@ -15,20 +15,22 @@ class ConnectivityWrapper extends StatelessWidget {
     isConnected = Provider.of<ConnectivityService>(context).isConnected;
     return isConnected
         ? child
-        : Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Image.asset(
-                'assets/images/vayo_ja.gif',
-                width: double.maxFinite,
-              ),
-              SizedBox(
-                height: 20,
-              ),
-              Text('વયો જા એય...',
-                  style: Theme.of(context).textTheme.headlineLarge)
-            ],
+        : Scaffold(
+            body: Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Image.asset(
+                  'assets/images/vayo_ja.gif',
+                  width: double.maxFinite,
+                ),
+                SizedBox(
+                  height: 20,
+                ),
+                Text('વયો જા એય...',
+                    style: Theme.of(context).textTheme.headlineLarge)
+              ],
+            ),
           );
   }
 }

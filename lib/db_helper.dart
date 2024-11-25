@@ -1,8 +1,12 @@
+import 'dart:io';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:wedding_collection_new/utils/models/product_model.dart';
 
 class FirebaseService {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
+  final FirebaseStorage _storage = FirebaseStorage.instance;
 
   // Add new product to Firestore (without booking dates)
   Future<void> addProduct(Product product) async {
@@ -11,6 +15,80 @@ class FirebaseService {
       print("Product added successfully!");
     } catch (e) {
       print('Error adding product: $e');
+    }
+  }
+
+  /// Add a product with images and upload progress tracking.
+  Future<void> addProductWithProgress(
+    Product product,
+    List<File> images,
+  ) async {
+    List<String> imageUrls = [];
+
+    try {
+      for (var image in images) {
+        // Upload each image and track progress
+        final String url = await _uploadImageWithProgress(image);
+        imageUrls.add(url);
+      }
+
+      // Assign image URLs to the product
+      product.images = imageUrls;
+
+      // Save product data to Firestore
+      await _addProductToFirestore(product);
+    } catch (e) {
+      throw Exception("Error adding product: $e");
+    }
+  }
+
+  /// Upload an image to Firebase Storage with progress tracking.
+  Future<String> _uploadImageWithProgress(
+    File image,
+  ) async {
+    try {
+      final storageRef =
+          _storage.ref().child('products/${image.path.split('/').last}');
+      final uploadTask = storageRef.putFile(image);
+      // Wait until the upload completes
+      final snapshot = await uploadTask.whenComplete(() => {});
+      return await snapshot.ref.getDownloadURL(); // Return the image URL
+    } catch (e) {
+      throw Exception("Error uploading image: $e");
+    }
+  }
+
+  /// Save product details to Firestore.
+  Future<void> _addProductToFirestore(Product product) async {
+    try {
+      await _db.collection('products').add(product.toMap());
+    } catch (e) {
+      throw Exception("Error saving product to Firestore: $e");
+    }
+  }
+
+  /// Delete a product and its associated images from Firebase Storage and Firestore.
+  Future<void> deleteProduct(String productId, List<String> imageUrls) async {
+    try {
+      // Delete product document from Firestore
+      await _db.collection('products').doc(productId).delete();
+
+      // Delete associated images from Firebase Storage
+      for (var imageUrl in imageUrls) {
+        await _deleteImageFromStorage(imageUrl);
+      }
+    } catch (e) {
+      throw Exception("Error deleting product: $e");
+    }
+  }
+
+  /// Delete an image from Firebase Storage.
+  Future<void> _deleteImageFromStorage(String imageUrl) async {
+    try {
+      final storageRef = _storage.refFromURL(imageUrl);
+      await storageRef.delete();
+    } catch (e) {
+      throw Exception("Error deleting image: $e");
     }
   }
 
@@ -96,18 +174,6 @@ class FirebaseService {
       }
     } catch (e) {
       print('Error updating booking: $e');
-    }
-  }
-
-  // Function to delete a product by its productId
-  Future<void> deleteProduct(String productId) async {
-    try {
-      // Deleting the product document from Firestore
-      await _db.collection('products').doc(productId).delete();
-
-      print("Product deleted successfully!");
-    } catch (e) {
-      print('Error deleting product: $e');
     }
   }
 

@@ -52,10 +52,26 @@ class _HomePageState extends State<HomePage> {
   }
 
   // Function to delete the product
-  void _deleteProduct(String productId) async {
+  void _deleteProduct(String productId, List<String> imageUrls) async {
     try {
-      _isLoading = true;
-      await firebaseService.deleteProduct(productId); // Delete from Firebase
+      Navigator.pop(context);
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => AlertDialog(
+          title: Text('Deleting Product'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text('Please wait',style: Theme.of(context).textTheme.titleLarge),
+              SizedBox(height: 20),
+              LinearProgressIndicator(),
+            ],
+          ),
+        ),
+      );
+      await firebaseService.deleteProduct(
+          productId, imageUrls); // Delete from Firebase
       setState(() {
         _products.removeWhere(
             (product) => product.id == productId); // Remove from local list
@@ -63,11 +79,9 @@ class _HomePageState extends State<HomePage> {
       });
       print("Product deleted successfully");
       Navigator.pop(context);
-      _isLoading = false;
     } catch (e) {
       print("Error deleting product: $e");
       Navigator.pop(context);
-      _isLoading = false;
     }
   }
 
@@ -170,7 +184,7 @@ class _HomePageState extends State<HomePage> {
                                 onLongPress: () {
                                   Helprtmethods().showaAlertDialog(context,
                                       onPressed: () {
-                                    _deleteProduct(product.id);
+                                    _deleteProduct(product.id, product.images);
                                   },
                                       tital: 'Delete',
                                       subtital:
@@ -187,9 +201,7 @@ class _HomePageState extends State<HomePage> {
                                         child: CachedNetworkImage(
                                           height: 200,
                                           width: double.maxFinite,
-                                          imageUrl: Helprtmethods()
-                                              .convertGoogleDriveLink(
-                                                  product.images.first),
+                                          imageUrl: product.images.first,
                                           placeholder: (context, url) =>
                                               Shimmer.fromColors(
                                             child: Card(),
@@ -233,7 +245,7 @@ class _HomePageState extends State<HomePage> {
           // Navigate to Add Product screen and wait for result (pop back when done)
           await Navigator.push(
             context,
-            MaterialPageRoute(builder: (context) => const AddProductScreen()),
+            MaterialPageRoute(builder: (context) => AddProductScreen()),
           );
           // After adding the product, refresh the list
           _loadProducts();
