@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:wedding_collection_new/ui/book_product_screen.dart';
-import 'package:wedding_collection_new/utils/widgets/helper/helper_methods.dart';
 import 'package:wedding_collection_new/utils/models/product_model.dart';
 import 'package:wedding_collection_new/utils/widgets/booking_detail_row.dart';
+import 'package:wedding_collection_new/utils/widgets/helper/helper_methods.dart';
 
 class BookingDetailsCard extends StatelessWidget {
   final List<Booking> booking;
@@ -72,12 +72,12 @@ class BookingDetailsCard extends StatelessWidget {
                           Expanded(
                             child: OutlinedButton(
                               onPressed: () {
-                                Helprtmethods().showaAlertDialog(context,
+                                HelperMethods().showaAlertDialog(context,
                                     onPressed: onCancel != null
                                         ? () => onCancel!(booking[index])
                                         : null,
-                                    tital: 'Cancel',
-                                    subtital:
+                                    title: 'Cancel',
+                                    subTitle:
                                         'Are you sure you want to cancel this booking?');
                               },
                               child: Text('Cancel Booking',

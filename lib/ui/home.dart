@@ -63,7 +63,8 @@ class _HomePageState extends State<HomePage> {
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text('Please wait',style: Theme.of(context).textTheme.titleLarge),
+              Text('Please wait',
+                  style: Theme.of(context).textTheme.titleLarge),
               SizedBox(height: 20),
               LinearProgressIndicator(),
             ],
@@ -182,12 +183,12 @@ class _HomePageState extends State<HomePage> {
                                   );
                                 },
                                 onLongPress: () {
-                                  Helprtmethods().showaAlertDialog(context,
+                                  HelperMethods().showaAlertDialog(context,
                                       onPressed: () {
                                     _deleteProduct(product.id, product.images);
                                   },
-                                      tital: 'Delete',
-                                      subtital:
+                                      title: 'Delete',
+                                      subTitle:
                                           'Are you sure you want to delete this product?');
                                 },
                                 child: Card(
